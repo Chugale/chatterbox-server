@@ -14,11 +14,11 @@ this file and include it in basic-server.js so that it actually works.
 const fs = require('fs');
 const path = require('path');
 
-const chatterbox = '/Users/ericlee/HackReactor/rfp2303-chatterbox-server/client';
-fs.readdir(chatterbox);
+// const chatterbox = '/Users/ericlee/HackReactor/rfp2303-chatterbox-server/client/scripts';
+// fs.readdir(chatterbox);
 
 const messageStorage = [];
-
+let count = 0;
 const defaultCorsHeaders = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -48,19 +48,20 @@ const requestHandler = function(request, response) {
   let headers = defaultCorsHeaders;
   let url = request.url;
   let type = request.method;
-  headers['Content-Type'] = 'application/JSON';
+  headers['Content-Type'] = 'application/json';
 
-  // if ( url === '/') {
-  //   response.end(<html></html>)
-  // }
-  if (type === 'GET' && url.includes('/classes/messages')) {
 
+  if (type === 'OPTIONS') {
+    headers = headers;
+    statusCode = 202;
+    response.writeHead(statusCode, headers);
+    response.end();
+  } else if (type === 'GET' && url.includes('/classes/messages')) {
     statusCode = 200;
     response.writeHead(statusCode, headers);
     response.end(JSON.stringify(messageStorage));
 
   } else if (type === 'POST' && url.includes('/classes/messages')) {
-
     statusCode = 201;
     let body = '';
     request.on('data', function(data) {
@@ -68,16 +69,14 @@ const requestHandler = function(request, response) {
     });
     request.on('end', function(end) {
       let post = JSON.parse(body);
+      post['message_id'] = count++;
       messageStorage.push(post);
       response.writeHead(statusCode, headers);
-      response.end();
+      response.end(JSON.stringify(messageStorage));
     });
-
   } else {
-
     response.writeHead(statusCode, headers);
     response.end(output);
-
   }
 
   // .writeHead() writes to the request line and headers of the response,
